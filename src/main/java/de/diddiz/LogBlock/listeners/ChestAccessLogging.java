@@ -38,19 +38,29 @@ public class ChestAccessLogging extends LoggingListener {
         if (holder instanceof BlockState || holder instanceof DoubleChest) {
             final HumanEntity player = event.getPlayer();
             final ItemStack[] before = containers.get(player);
-            if (before != null) {
-                final ItemStack[] after = compressInventory(event.getInventory().getContents());
-                final ItemStack[] diff = compareInventories(before, after);
-                final Location loc = getInventoryHolderLocation(holder);
-                if (loc != null) {
-                    for (final ItemStack item : diff) {
-                        ItemStack item2 = item.clone();
-                        item2.setAmount(Math.abs(item.getAmount()));
-                        consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getWorld().getBlockAt(loc).getBlockData(), item2, item.getAmount() < 0);
-                    }
-                }
-                containers.remove(player);
+            if (before == null) {
+                return;
             }
+            
+            final ItemStack[] after = compressInventory(event.getInventory().getContents());
+            final ItemStack[] diff = compareInventories(before, after);
+            final Location location = getInventoryHolderLocation(holder);
+            if (location != null) {
+                for (final ItemStack stack : diff) {
+                    ItemStack stackAbs = stack.clone();
+                    stackAbs.setAmount(Math.abs(stack.getAmount()));
+ 
+                    consumer.queueChestAccess(
+                        Actor.actorFromEntity(player),
+                        location,
+                        location.getWorld().getBlockAt(location).getBlockData(),
+                        stackAbs,
+                        stack.getAmount() < 0
+                    );
+                }
+            }
+            
+            containers.remove(player);
         }
     }
 
